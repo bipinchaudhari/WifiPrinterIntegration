@@ -1,35 +1,52 @@
 package com.bipiinchowdhury.wifiprinterintegration;
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import crl.android.pdfwriter.PDFWriter;
+import crl.android.pdfwriter.PaperSize;
+import crl.android.pdfwriter.StandardFonts;
+import crl.android.pdfwriter.Transformation;
+
 import static android.graphics.Color.BLACK;
 import static android.graphics.Color.WHITE;
+import static android.os.Environment.DIRECTORY_DOWNLOADS;
 
 public class MainActivity extends AppCompatActivity {
     public static int white = 0xFFFFFFFF;
     public static int black = 0xFF000000;
-    public final static int WIDTH=500;
+    public final static int WIDTH=300;
+    TextView mText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        mText = (TextView) findViewById(R.id.tv_hello_word);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -44,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
                                     Bitmap bmp =  encodeAsBitmap("non sense");
                                     ImageView imageView = (ImageView)findViewById(R.id.iv_qr_code);
                                     imageView.setImageBitmap(bmp);
+                                    String pdfcontent = generatePDF(bmp);
+                                    outputToScreen(mText, pdfcontent);
+                                    outputToFile("helloworld.pdf", pdfcontent, "ISO-8859-1");
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -97,5 +117,58 @@ public class MainActivity extends AppCompatActivity {
         Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         bitmap.setPixels(pixels, 0, WIDTH, 0, 0, w, h);
         return bitmap;
+    }
+    private String generatePDF(Bitmap bitmapQRCode){
+        AssetManager mngr = getAssets();
+        PDFWriter mPDFWriter = new PDFWriter(PaperSize.FOLIO_HEIGHT, PaperSize.FOLIO_WIDTH);
+        try {
+
+            mPDFWriter.addImageKeepRatio(0,0,PaperSize.FOLIO_HEIGHT,PaperSize.FOLIO_WIDTH,BitmapFactory.decodeStream(mngr.open("header_footer.png")));
+            mPDFWriter.addImage(10,130,bitmapQRCode);
+            //mPDFWriter.addLine(450,280,300,280);
+            mPDFWriter.addImage(300,260,BitmapFactory.decodeStream(mngr.open("horizontal_bar.png")));
+            mPDFWriter.setFont(StandardFonts.TIMES_BOLD, StandardFonts.TIMES_BOLD, StandardFonts.WIN_ANSI_ENCODING);
+            mPDFWriter.addText(300,290,60,"Claudia Moro");
+            mPDFWriter.setFont(StandardFonts.SUBTYPE, StandardFonts.COURIER, StandardFonts.WIN_ANSI_ENCODING);
+            mPDFWriter.addText(300,210,50,"SYSTEMAX ITALY SRL");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        int pageCount = mPDFWriter.getPageCount();
+        for (int i = 0; i < pageCount; i++) {
+            mPDFWriter.setCurrentPage(i);
+            mPDFWriter.addText(10, 10, 8, Integer.toString(i + 1) + " / " + Integer.toString(pageCount));
+        }
+
+        String s = mPDFWriter.asString();
+        return s;
+    }
+    private void outputToScreen(TextView mText, String pdfContent) {
+        this.mText = mText;
+        //this.mText.setText(pdfContent);
+    }
+
+    private void outputToFile(String fileName, String pdfContent, String encoding) throws FileNotFoundException {
+        File downloads = Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS);
+        if (!downloads.exists() && !downloads.mkdirs())
+            throw new RuntimeException("Could not create download folder");
+
+        File newFile = new File(downloads, fileName);
+        Log.i("PDF", "Writing file to " + newFile);
+
+        try {
+            newFile.createNewFile();
+            try {
+                FileOutputStream pdfFile = new FileOutputStream(newFile);
+                pdfFile.write(pdfContent.getBytes(encoding));
+                pdfFile.close();
+            } catch (FileNotFoundException e) {
+                Log.w("PDF", e);
+            }
+        } catch (IOException e) {
+            Log.w("PDF", e);
+        }
     }
 }

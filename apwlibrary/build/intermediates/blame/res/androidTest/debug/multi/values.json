@@ -22,5 +22,29 @@
                 }
             }
         ]
+    },
+    {
+        "outputFile": "D:\\AndroidStudioProjects\\WifiPrinterIntegration\\apwlibrary\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 45,
+                    "endOffset": 96
+                },
+                "from": {
+                    "file": "C:\\Users\\Bipin.Chaudhari\\.android\\build-cache\\ea7b4ea27ce2515948c62e14ae53bf944aa75fc2\\output\\res\\values\\values.xml",
+                    "position": {
+                        "startLine": 4,
+                        "startColumn": 4,
+                        "startOffset": 287,
+                        "endColumn": 45,
+                        "endOffset": 328
+                    }
+                }
+            }
+        ]
     }
 ]
